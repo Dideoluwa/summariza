@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = `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`;
+const OPENAI_API_KEY = ``;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
