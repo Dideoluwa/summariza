@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
           createSparkles(15);
         }, 300);
       }, 800);
+      chrome.action.setBadgeText({ text: "" });
     }
   });
 
