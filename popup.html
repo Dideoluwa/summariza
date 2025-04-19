@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Summariza - Smart Summary Tool</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #f43f5e;
+      --dark: #1e293b;
+      --light: #f8fafc;
+      --accent: #0ea5e9;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, var(--dark), #0f172a);
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: 350px;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: pulse 2s infinite;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .sparkle {
+      display: inline-block;
+      animation: spin 3s linear infinite;
+    }
+    
+    .summary-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+    }
+    
+    .summary-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+    }
+    
+    .summary-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    
+    .summary-container:hover::before {
+      opacity: 1;
+    }
+    
+    #summary {
+      white-space: pre-wrap;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--light);
+      margin: 0;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .button-container {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 1.5rem;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    #clear-btn {
+      background: linear-gradient(45deg, var(--secondary), #e11d48);
+      color: white;
+    }
+    
+    #copy-btn {
+      background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+      color: white;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+    
+    button:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+    
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.4rem;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .stats {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .loading {
+      display: inline-block;
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+    }
+    
+    .loading div {
+      position: absolute;
+      top: 27px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation-timing-function: cubic-bezier(0, 1, 1, 0);
+    }
+    
+    .loading div:nth-child(1) {
+      left: 6px;
+      animation: loading1 0.6s infinite;
+    }
+    
+    .loading div:nth-child(2) {
+      left: 6px;
+      animation: loading2 0.6s infinite;
+    }
+    
+    .loading div:nth-child(3) {
+      left: 26px;
+      animation: loading2 0.6s infinite;
+    }
+    
+    .loading div:nth-child(4) {
+      left: 45px;
+      animation: loading3 0.6s infinite;
+    }
+    
+    @keyframes loading1 {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes loading3 {
+      0% { transform: scale(1); }
+      100% { transform: scale(0); }
+    }
+    
+    @keyframes loading2 {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(19px, 0); }
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 1;
+      }
+      20% {
+        transform: scale(25, 25);
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: scale(40, 40);
+      }
+    }
+    
+    .footer {
+      margin-top: auto;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Sparkle animations */
+    .sparkles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .sparkle-dot {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="sparkles" id="sparkles"></div>
+  
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <span class="sparkle">✨</span> Summarize it!
+      </div>
+      <button class="theme-toggle" id="theme-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="word-count">0</div>
+        <div class="stat-label">Words</div>
+      </div>
+      <!-- <div class="stat-item">
+        <div class="stat-value" id="char-count">0</div>
+        <div class="stat-label">Chars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="sentence-count">0</div>
+        <div class="stat-label">Sentences</div>
+      </div> -->
+    </div>
+
+    <div class="summary-container" id="summary-container">
+      <div id="loading-container" style="display: flex; justify-content: center; align-items: center; height: 100%;">
+        <div class="loading"><div></div><div></div><div></div><div></div></div>
+      </div>
+      <pre id="summary" style="display: none;">Loading summary...</pre>
+    </div>
+    
+    <div class="button-container">
+      <button id="copy-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      </button>
+      <button id="clear-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Clear
+      </button>
+    </div>
+  </div>
+
+  
+  <script src="popup.js"></script>
+</body>
+</html>
