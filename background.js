@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = ``;
+const GEMINI_API_KEY = ``;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -45,24 +45,26 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         // Combine the sections into the final prompt.
         const prompt = `${context}\n\n${instruction}\n\n${define}\n\n${input}\n\nGenerate the output below:`;
 
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
           }),
         });
         const data = await res.json();
-        const summary =
-          data.choices?.[0]?.message?.content?.trim() || "No summary returned.";
+        const summary = 
+          data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "No summary returned.";
 
         chrome.runtime.sendMessage({ type: "SAVE_SUMMARY", summary });
       },
-      args: [info.selectionText, OPENAI_API_KEY],
+      args: [info.selectionText, GEMINI_API_KEY],
     });
   }
 });
