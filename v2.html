@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Summarize It! - Text Summarizer</title>
+  <style>
+    :root {
+      --primary: #4285F4; /* Google Blue */
+      --secondary: #EA4335; /* Google Red */
+      --green: #34A853; /* Google Green */
+      --yellow: #FBBC05; /* Google Yellow */
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --background: #ffffff;
+      --surface: #f8f9fa;
+      --border: #dadce0;
+      --shadow: rgba(60, 64, 67, 0.3);
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--background);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: 350px;
+      overflow-x: hidden;
+      font-size: 13px;
+      line-height: 1.54;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .container {
+      width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      position: relative;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .logo {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.01em;
+    }
+    
+    .sparkle {
+      display: inline-block;
+      color: var(--yellow);
+    }
+    
+    .summary-container {
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+    }
+    
+    .summary-container:hover {
+      box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+    }
+    
+    #summary {
+      white-space: pre-wrap;
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.54;
+      color: var(--text-primary);
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      font-family: inherit;
+    }
+    
+    .button-container {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--surface);
+      color: var(--text-primary);
+      font-family: inherit;
+      letter-spacing: 0.01em;
+    }
+    
+    #clear-btn {
+      color: var(--secondary);
+    }
+    
+    #copy-btn {
+      color: var(--primary);
+    }
+    
+    button:hover {
+      background-color: rgba(66, 133, 244, 0.04);
+    }
+    
+    button:active {
+      background-color: rgba(66, 133, 244, 0.12);
+    }
+    
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 4px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .theme-toggle:hover {
+      background: rgba(60, 64, 67, 0.08);
+    }
+    
+    .stats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-item {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    
+    .stat-item:hover {
+      background: rgba(66, 133, 244, 0.04);
+    }
+    
+    .stat-value {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      letter-spacing: 0.01em;
+    }
+    
+    /* Chrome-style loading spinner */
+    .loading {
+      display: inline-block;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto;
+    }
+    
+    .loading-spinner {
+      box-sizing: border-box;
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 3px solid transparent;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spinner 1s linear infinite;
+    }
+    
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .footer {
+      margin-top: auto;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <span class="sparkle">✨</span> Summarize It!
+      </div>
+      <button class="theme-toggle" id="theme-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="word-count">0</div>
+        <div class="stat-label">Words</div>
+      </div>
+    </div>
+
+    <div class="summary-container" id="summary-container">
+      <div id="loading-container" style="display: flex; justify-content: center; align-items: center; height: 100%;">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+      <pre id="summary" style="display: none;">Loading summary...</pre>
+    </div>
+    
+    <div class="button-container">
+      <button id="copy-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      </button>
+      <button id="clear-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Summarize It! - Text Summarizer
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
