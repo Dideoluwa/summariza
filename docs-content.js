@@ -1,4 +1,4 @@
-console.log("Summarize It! extension loaded in Google Docs");
+  console.log("Summarize It! extension loaded in Google Docs");
 
 // Note: Automatic text selection handling has been disabled.
 // Users should use the context menu (right-click > "Summarize this text") to summarize text.

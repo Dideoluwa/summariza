@@ -36,15 +36,21 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   ) {
     // Store original text for translation
     chrome.storage.local.set({ originalText: info.selectionText });
-    
+
     // Get preferred language, format, length, tone, and API key
-    const result = await chrome.storage.local.get(["preferredLanguage", "preferredFormat", "preferredLength", "preferredTone", "apiKey"]);
+    const result = await chrome.storage.local.get([
+      "preferredLanguage",
+      "preferredFormat",
+      "preferredLength",
+      "preferredTone",
+      "apiKey",
+    ]);
     const targetLanguage = result.preferredLanguage || "auto";
     const targetFormat = result.preferredFormat || "brief";
     const targetLength = result.preferredLength || "medium";
     const targetTone = result.preferredTone || "neutral";
     const apiKey = result.apiKey || DEFAULT_API_KEY;
-    
+
     let port;
     try {
       port = chrome.tabs.connect(tab.id, { name: "summarize" });
@@ -64,42 +70,103 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
       if (!canInject) {
         saveAndStoreSummary(
-          "Unable to summarize text on this page. The page may have restrictions that prevent text selection."
+          "Unable to summarize text on this page. The page may have restrictions that prevent text selection.",
         );
         return;
       }
 
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: async (selectedText, apiKey, targetLanguage, targetFormat, targetLength, targetTone) => {
+        func: async (
+          selectedText,
+          apiKey,
+          targetLanguage,
+          targetFormat,
+          targetLength,
+          targetTone,
+        ) => {
           // Get language name mapping
           const languageNames = {
-            "en": "English", "es": "Spanish", "fr": "French", "de": "German",
-            "it": "Italian", "pt": "Portuguese", "ru": "Russian", "ja": "Japanese",
-            "ko": "Korean", "zh": "Chinese (Simplified)", "zh-TW": "Chinese (Traditional)",
-            "ar": "Arabic", "hi": "Hindi", "tr": "Turkish", "pl": "Polish",
-            "nl": "Dutch", "sv": "Swedish", "da": "Danish", "no": "Norwegian",
-            "fi": "Finnish", "el": "Greek", "he": "Hebrew", "th": "Thai",
-            "vi": "Vietnamese", "id": "Indonesian", "ms": "Malay", "cs": "Czech",
-            "ro": "Romanian", "hu": "Hungarian", "uk": "Ukrainian", "bg": "Bulgarian",
-            "hr": "Croatian", "sk": "Slovak", "sl": "Slovenian", "sr": "Serbian",
-            "et": "Estonian", "lv": "Latvian", "lt": "Lithuanian", "ga": "Irish",
-            "mt": "Maltese", "is": "Icelandic", "mk": "Macedonian", "sq": "Albanian",
-            "bs": "Bosnian", "sw": "Swahili", "af": "Afrikaans", "az": "Azerbaijani",
-            "bn": "Bengali", "ca": "Catalan", "eu": "Basque", "fa": "Persian",
-            "gl": "Galician", "gu": "Gujarati", "ha": "Hausa", "iw": "Hebrew",
-            "ka": "Georgian", "kk": "Kazakh", "km": "Khmer", "lo": "Lao",
-            "ml": "Malayalam", "mr": "Marathi", "my": "Myanmar", "ne": "Nepali",
-            "pa": "Punjabi", "si": "Sinhala", "ta": "Tamil", "te": "Telugu",
-            "ur": "Urdu", "uz": "Uzbek"
+            en: "English",
+            es: "Spanish",
+            fr: "French",
+            de: "German",
+            it: "Italian",
+            pt: "Portuguese",
+            ru: "Russian",
+            ja: "Japanese",
+            ko: "Korean",
+            zh: "Chinese (Simplified)",
+            "zh-TW": "Chinese (Traditional)",
+            ar: "Arabic",
+            hi: "Hindi",
+            tr: "Turkish",
+            pl: "Polish",
+            nl: "Dutch",
+            sv: "Swedish",
+            da: "Danish",
+            no: "Norwegian",
+            fi: "Finnish",
+            el: "Greek",
+            he: "Hebrew",
+            th: "Thai",
+            vi: "Vietnamese",
+            id: "Indonesian",
+            ms: "Malay",
+            cs: "Czech",
+            ro: "Romanian",
+            hu: "Hungarian",
+            uk: "Ukrainian",
+            bg: "Bulgarian",
+            hr: "Croatian",
+            sk: "Slovak",
+            sl: "Slovenian",
+            sr: "Serbian",
+            et: "Estonian",
+            lv: "Latvian",
+            lt: "Lithuanian",
+            ga: "Irish",
+            mt: "Maltese",
+            is: "Icelandic",
+            mk: "Macedonian",
+            sq: "Albanian",
+            bs: "Bosnian",
+            sw: "Swahili",
+            af: "Afrikaans",
+            az: "Azerbaijani",
+            bn: "Bengali",
+            ca: "Catalan",
+            eu: "Basque",
+            fa: "Persian",
+            gl: "Galician",
+            gu: "Gujarati",
+            ha: "Hausa",
+            iw: "Hebrew",
+            ka: "Georgian",
+            kk: "Kazakh",
+            km: "Khmer",
+            lo: "Lao",
+            ml: "Malayalam",
+            mr: "Marathi",
+            my: "Myanmar",
+            ne: "Nepali",
+            pa: "Punjabi",
+            si: "Sinhala",
+            ta: "Tamil",
+            te: "Telugu",
+            ur: "Urdu",
+            uz: "Uzbek",
           };
-          
-          const targetLanguageName = targetLanguage === "auto" ? null : (languageNames[targetLanguage] || targetLanguage);
-          
+
+          const targetLanguageName =
+            targetLanguage === "auto"
+              ? null
+              : languageNames[targetLanguage] || targetLanguage;
+
           // Length adjustments
           let lengthMultiplier = 1;
           let lengthDescription = "";
-          switch(targetLength) {
+          switch (targetLength) {
             case "short":
               lengthMultiplier = 0.7;
               lengthDescription = "Keep it concise and brief.";
@@ -116,18 +183,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
           // Tone instructions
           let toneInstruction = "";
-          switch(targetTone) {
+          switch (targetTone) {
             case "formal":
-              toneInstruction = "Use a formal, professional tone with proper grammar and structure.";
+              toneInstruction =
+                "Use a formal, professional tone with proper grammar and structure.";
               break;
             case "casual":
-              toneInstruction = "Use a casual, conversational tone that's easy to read.";
+              toneInstruction =
+                "Use a casual, conversational tone that's easy to read.";
               break;
             case "technical":
-              toneInstruction = "Use a technical tone with appropriate terminology and precision.";
+              toneInstruction =
+                "Use a technical tone with appropriate terminology and precision.";
               break;
             case "simple":
-              toneInstruction = "Use simple language that's easy to understand, avoiding jargon.";
+              toneInstruction =
+                "Use simple language that's easy to understand, avoiding jargon.";
               break;
             default:
               toneInstruction = "Use a neutral, balanced tone.";
@@ -136,8 +207,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           // Format-specific instructions
           let formatInstruction = "";
           let formatStructure = "";
-          
-          switch(targetFormat) {
+
+          switch (targetFormat) {
             case "brief":
               formatInstruction = `Provide a very brief summary (${Math.round(2 * lengthMultiplier)}-${Math.round(3 * lengthMultiplier)} sentences) and a short explanation (max ${Math.round(100 * lengthMultiplier)} words). ${lengthDescription} ${toneInstruction}`;
               formatStructure = `SUMMARY:\n[${Math.round(2 * lengthMultiplier)}-${Math.round(3 * lengthMultiplier)} sentences maximum, including ALL key points]\n\nEXPLANATION:\n[Simple explanation in ${Math.round(100 * lengthMultiplier)} words or less]`;
@@ -159,7 +230,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
               formatStructure = `Q: [Question 1]\nA: [Answer 1]\n\nQ: [Question 2]\nA: [Answer 2]\n\nQ: [Question 3]\nA: [Answer 3]\n...`;
               break;
           }
-          
+
           const context = `You are an expert AI assistant skilled in text analysis and summarization. A user has highlighted text from a webpage.${targetLanguageName ? ` IMPORTANT: Generate the response in ${targetLanguageName}.` : " Auto-detect the language of the source text and respond in the same language."}`;
 
           const instruction = `${formatInstruction}${targetLanguageName ? ` Write in ${targetLanguageName}.` : ""}`;
@@ -191,7 +262,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                     },
                   ],
                 }),
-              }
+              },
             );
 
             if (!res.ok) {
@@ -203,10 +274,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
               data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
               "No summary returned.";
 
-            chrome.runtime.sendMessage({ 
-              type: "SAVE_SUMMARY", 
+            chrome.runtime.sendMessage({
+              type: "SAVE_SUMMARY",
               summary,
-              originalText: selectedText
+              originalText: selectedText,
             });
           } catch (error) {
             chrome.runtime.sendMessage({
@@ -215,7 +286,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             });
           }
         },
-        args: [info.selectionText, apiKey, targetLanguage, targetFormat, targetLength, targetTone],
+        args: [
+          info.selectionText,
+          apiKey,
+          targetLanguage,
+          targetFormat,
+          targetLength,
+          targetTone,
+        ],
       });
     } catch (error) {
       saveAndStoreSummary("Unable to process your request. Please try again.");
@@ -227,7 +305,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-const saveAndStoreSummary = async (summary, originalText = null, url = null) => {
+const saveAndStoreSummary = async (
+  summary,
+  originalText = null,
+  url = null,
+) => {
   // Save current summary
   chrome.storage.local.set({ summary }, () => {
     // Open popup automatically when summary is ready (triggered by menu click)
@@ -237,26 +319,32 @@ const saveAndStoreSummary = async (summary, originalText = null, url = null) => 
   // Check privacy mode before saving to history
   chrome.storage.local.get(["privacyMode"], async (privacyResult) => {
     const isPrivacyMode = privacyResult.privacyMode === true;
-    
+
     // Save to history only if privacy mode is disabled
-    if (!isPrivacyMode && summary && summary !== "No summary available." && summary !== "Failed to generate summary. Please try again later.") {
+    if (
+      !isPrivacyMode &&
+      summary &&
+      summary !== "No summary available." &&
+      summary !== "Failed to generate summary. Please try again later."
+    ) {
       const historyEntry = {
         id: Date.now().toString(),
         summary: summary,
         originalText: originalText || "",
         url: url || "",
         timestamp: Date.now(),
-        wordCount: summary.split(/\s+/).filter(word => word.length > 0).length,
-        date: new Date().toISOString()
+        wordCount: summary.split(/\s+/).filter((word) => word.length > 0)
+          .length,
+        date: new Date().toISOString(),
       };
 
       chrome.storage.local.get(["summaryHistory"], (result) => {
         const history = result.summaryHistory || [];
         history.unshift(historyEntry); // Add to beginning
-        
+
         // Keep only last 100 entries to manage storage
         const limitedHistory = history.slice(0, 100);
-        
+
         chrome.storage.local.set({ summaryHistory: limitedHistory });
       });
     }
@@ -299,48 +387,115 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function processSummaryForDocs(selectedText, tabId) {
   // Store original text for translation
   chrome.storage.local.set({ originalText: selectedText });
-  
+
   // Get preferred language, format, length, tone, and API key
-  const result = await chrome.storage.local.get(["preferredLanguage", "preferredFormat", "preferredLength", "preferredTone", "apiKey"]);
+  const result = await chrome.storage.local.get([
+    "preferredLanguage",
+    "preferredFormat",
+    "preferredLength",
+    "preferredTone",
+    "apiKey",
+  ]);
   const targetLanguage = result.preferredLanguage || "auto";
   const targetFormat = result.preferredFormat || "brief";
   const targetLength = result.preferredLength || "medium";
   const targetTone = result.preferredTone || "neutral";
   const apiKey = result.apiKey || DEFAULT_API_KEY; // Default fallback
-  
+
   console.log(selectedText);
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
-      func: async (selectedText, apiKey, targetLanguage, targetFormat, targetLength, targetTone) => {
+      func: async (
+        selectedText,
+        apiKey,
+        targetLanguage,
+        targetFormat,
+        targetLength,
+        targetTone,
+      ) => {
         // Get language name mapping
         const languageNames = {
-          "en": "English", "es": "Spanish", "fr": "French", "de": "German",
-          "it": "Italian", "pt": "Portuguese", "ru": "Russian", "ja": "Japanese",
-          "ko": "Korean", "zh": "Chinese (Simplified)", "zh-TW": "Chinese (Traditional)",
-          "ar": "Arabic", "hi": "Hindi", "tr": "Turkish", "pl": "Polish",
-          "nl": "Dutch", "sv": "Swedish", "da": "Danish", "no": "Norwegian",
-          "fi": "Finnish", "el": "Greek", "he": "Hebrew", "th": "Thai",
-          "vi": "Vietnamese", "id": "Indonesian", "ms": "Malay", "cs": "Czech",
-          "ro": "Romanian", "hu": "Hungarian", "uk": "Ukrainian", "bg": "Bulgarian",
-          "hr": "Croatian", "sk": "Slovak", "sl": "Slovenian", "sr": "Serbian",
-          "et": "Estonian", "lv": "Latvian", "lt": "Lithuanian", "ga": "Irish",
-          "mt": "Maltese", "is": "Icelandic", "mk": "Macedonian", "sq": "Albanian",
-          "bs": "Bosnian", "sw": "Swahili", "af": "Afrikaans", "az": "Azerbaijani",
-          "bn": "Bengali", "ca": "Catalan", "eu": "Basque", "fa": "Persian",
-          "gl": "Galician", "gu": "Gujarati", "ha": "Hausa", "iw": "Hebrew",
-          "ka": "Georgian", "kk": "Kazakh", "km": "Khmer", "lo": "Lao",
-          "ml": "Malayalam", "mr": "Marathi", "my": "Myanmar", "ne": "Nepali",
-          "pa": "Punjabi", "si": "Sinhala", "ta": "Tamil", "te": "Telugu",
-          "ur": "Urdu", "uz": "Uzbek"
+          en: "English",
+          es: "Spanish",
+          fr: "French",
+          de: "German",
+          it: "Italian",
+          pt: "Portuguese",
+          ru: "Russian",
+          ja: "Japanese",
+          ko: "Korean",
+          zh: "Chinese (Simplified)",
+          "zh-TW": "Chinese (Traditional)",
+          ar: "Arabic",
+          hi: "Hindi",
+          tr: "Turkish",
+          pl: "Polish",
+          nl: "Dutch",
+          sv: "Swedish",
+          da: "Danish",
+          no: "Norwegian",
+          fi: "Finnish",
+          el: "Greek",
+          he: "Hebrew",
+          th: "Thai",
+          vi: "Vietnamese",
+          id: "Indonesian",
+          ms: "Malay",
+          cs: "Czech",
+          ro: "Romanian",
+          hu: "Hungarian",
+          uk: "Ukrainian",
+          bg: "Bulgarian",
+          hr: "Croatian",
+          sk: "Slovak",
+          sl: "Slovenian",
+          sr: "Serbian",
+          et: "Estonian",
+          lv: "Latvian",
+          lt: "Lithuanian",
+          ga: "Irish",
+          mt: "Maltese",
+          is: "Icelandic",
+          mk: "Macedonian",
+          sq: "Albanian",
+          bs: "Bosnian",
+          sw: "Swahili",
+          af: "Afrikaans",
+          az: "Azerbaijani",
+          bn: "Bengali",
+          ca: "Catalan",
+          eu: "Basque",
+          fa: "Persian",
+          gl: "Galician",
+          gu: "Gujarati",
+          ha: "Hausa",
+          iw: "Hebrew",
+          ka: "Georgian",
+          kk: "Kazakh",
+          km: "Khmer",
+          lo: "Lao",
+          ml: "Malayalam",
+          mr: "Marathi",
+          my: "Myanmar",
+          ne: "Nepali",
+          pa: "Punjabi",
+          si: "Sinhala",
+          ta: "Tamil",
+          te: "Telugu",
+          ur: "Urdu",
+          uz: "Uzbek",
         };
-        
-        const targetLanguageName = targetLanguage === "auto" ? null : (languageNames[targetLanguage] || targetLanguage);
-        
+
+        const targetLanguageName =
+          targetLanguage === "auto"
+            ? null
+            : languageNames[targetLanguage] || targetLanguage;
+
         // Length adjustments
         let lengthMultiplier = 1;
         let lengthDescription = "";
-        switch(targetLength) {
+        switch (targetLength) {
           case "short":
             lengthMultiplier = 0.7;
             lengthDescription = "Keep it concise and brief.";
@@ -357,18 +512,22 @@ async function processSummaryForDocs(selectedText, tabId) {
 
         // Tone instructions
         let toneInstruction = "";
-        switch(targetTone) {
+        switch (targetTone) {
           case "formal":
-            toneInstruction = "Use a formal, professional tone with proper grammar and structure.";
+            toneInstruction =
+              "Use a formal, professional tone with proper grammar and structure.";
             break;
           case "casual":
-            toneInstruction = "Use a casual, conversational tone that's easy to read.";
+            toneInstruction =
+              "Use a casual, conversational tone that's easy to read.";
             break;
           case "technical":
-            toneInstruction = "Use a technical tone with appropriate terminology and precision.";
+            toneInstruction =
+              "Use a technical tone with appropriate terminology and precision.";
             break;
           case "simple":
-            toneInstruction = "Use simple language that's easy to understand, avoiding jargon.";
+            toneInstruction =
+              "Use simple language that's easy to understand, avoiding jargon.";
             break;
           default:
             toneInstruction = "Use a neutral, balanced tone.";
@@ -377,8 +536,8 @@ async function processSummaryForDocs(selectedText, tabId) {
         // Format-specific instructions
         let formatInstruction = "";
         let formatStructure = "";
-        
-        switch(targetFormat) {
+
+        switch (targetFormat) {
           case "brief":
             formatInstruction = `Provide a very brief summary (${Math.round(2 * lengthMultiplier)}-${Math.round(3 * lengthMultiplier)} sentences) and a short explanation (max ${Math.round(100 * lengthMultiplier)} words). ${lengthDescription} ${toneInstruction}`;
             formatStructure = `SUMMARY:\n[${Math.round(2 * lengthMultiplier)}-${Math.round(3 * lengthMultiplier)} sentences maximum, including ALL key points]\n\nEXPLANATION:\n[Simple explanation in ${Math.round(100 * lengthMultiplier)} words or less]`;
@@ -400,7 +559,7 @@ async function processSummaryForDocs(selectedText, tabId) {
             formatStructure = `Q: [Question 1]\nA: [Answer 1]\n\nQ: [Question 2]\nA: [Answer 2]\n\nQ: [Question 3]\nA: [Answer 3]\n...`;
             break;
         }
-        
+
         const context = `You are an expert AI assistant skilled in text analysis and summarization. A user has highlighted text from a webpage.${targetLanguageName ? ` IMPORTANT: Generate the response in ${targetLanguageName}.` : " Auto-detect the language of the source text and respond in the same language."}`;
 
         const instruction = `${formatInstruction}${targetLanguageName ? ` Write in ${targetLanguageName}.` : ""}`;
@@ -432,7 +591,7 @@ async function processSummaryForDocs(selectedText, tabId) {
                   },
                 ],
               }),
-            }
+            },
           );
 
           if (!res.ok) {
@@ -452,11 +611,18 @@ async function processSummaryForDocs(selectedText, tabId) {
           });
         }
       },
-      args: [selectedText, apiKey, targetLanguage, targetFormat, targetLength, targetTone],
+      args: [
+        selectedText,
+        apiKey,
+        targetLanguage,
+        targetFormat,
+        targetLength,
+        targetTone,
+      ],
     });
   } catch (error) {
     saveAndStoreSummary(
-      "Unable to process your request from Google Docs. Please try again."
+      "Unable to process your request from Google Docs. Please try again.",
     );
   }
 }
